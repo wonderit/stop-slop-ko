@@ -183,7 +183,7 @@ class DeckKeyword(unittest.TestCase):
 
 class HumanLikeKeyword(unittest.TestCase):
     def test_detected(self):
-        for p in ["사람처럼 써줘", "인간처럼 써줘", "사람처럼 써쭤", "사람이 쓴 것처럼 다듬어줘", "AI스럽지 않게 적어줘", "이 글 AI스럽지 않게 다듬어줘"]:
+        for p in ["사람처럼 써줘", "인간처럼 써줘", "사람처럼 써쭤", "사람이 쓴 것처럼 다듬어줘", "AI스럽지 않게 적어줘", "이 글 AI스럽지 않게 다듬어줘", "말투좀 고쳐줘", "말투 좀 고쳐줘", "말투 사람처럼 고쳐줘"]:
             self.assertIsNotNone(H.route(p, jasoseo=False), p)
 
     def test_unrelated_ignored(self):
