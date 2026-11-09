@@ -22,18 +22,18 @@ def home(installed=None, settings=None):
     return d
 
 
-INSTALLED = json.dumps({"version": 2, "plugins": {"jasoseo@stop-slop-ko": [{"scope": "user"}]}})
+INSTALLED = json.dumps({"version": 2, "plugins": {"jasoseo@wonderit": [{"scope": "user"}]}})
 
 
 class JasoseoActive(unittest.TestCase):
     def test_installed_enabled(self):
-        self.assertTrue(H.jasoseo_active(home(INSTALLED, json.dumps({"enabledPlugins": {"jasoseo@stop-slop-ko": True}}))))
+        self.assertTrue(H.jasoseo_active(home(INSTALLED, json.dumps({"enabledPlugins": {"jasoseo@wonderit": True}}))))
 
     def test_installed_no_settings(self):
         self.assertTrue(H.jasoseo_active(home(INSTALLED)))
 
     def test_disabled(self):
-        self.assertFalse(H.jasoseo_active(home(INSTALLED, json.dumps({"enabledPlugins": {"jasoseo@stop-slop-ko": False}}))))
+        self.assertFalse(H.jasoseo_active(home(INSTALLED, json.dumps({"enabledPlugins": {"jasoseo@wonderit": False}}))))
 
     def test_not_installed(self):
         self.assertFalse(H.jasoseo_active(home(json.dumps({"version": 2, "plugins": {}}))))
@@ -57,11 +57,11 @@ def project(settings=None, local=None):
 
 
 def enabled(v):
-    return json.dumps({"enabledPlugins": {"jasoseo@stop-slop-ko": v}})
+    return json.dumps({"enabledPlugins": {"jasoseo@wonderit": v}})
 
 
 def installed_in(path, scope="project"):
-    return json.dumps({"version": 2, "plugins": {"jasoseo@stop-slop-ko": [
+    return json.dumps({"version": 2, "plugins": {"jasoseo@wonderit": [
         {"scope": scope, "projectPath": str(path)}]}})
 
 

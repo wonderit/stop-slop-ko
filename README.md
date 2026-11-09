@@ -19,7 +19,7 @@
 | 표지, 제목, 부제, 라벨 | PASS여도 한 번 읽기 | 사람이 쓸 말인지 읽어서 확인하는 절차 명시 |
 | 자동 적용 훅의 `덱` 요청 | 감지 안 함 | "주간 덱 만들어줘" 감지, "인덱스 정리"는 제외 |
 | 자동 적용 훅의 말투 요청 | `AI 티`, `번역투`, 톤 맞춤 | "AI스럽지 않게 적어줘", "사람처럼 써줘", "인간처럼 써줘", "말투 좀 고쳐줘", "AI slop 빼고 써줘" 추가 |
-| 설치 경로 | `leeandev/stop-slop-ko` | `wonderit/stop-slop-ko` |
+| 설치 경로 | `leeandev/stop-slop-ko`, `stop-slop-ko@stop-slop-ko` | `wonderit/stop-slop-ko`, `stop-slop-ko@wonderit` |
 
 추가한 규칙의 수정 예시입니다.
 
@@ -183,19 +183,19 @@ Claude Code 입력창에 한 줄씩 입력합니다.
 stop-slop-ko 설치 (기본):
 
 ```
-/plugin install stop-slop-ko@stop-slop-ko
+/plugin install stop-slop-ko@wonderit
 ```
 
 stakeholder-brief 설치 (공유 문서도 만들 때만 추가):
 
 ```
-/plugin install stakeholder-brief@stop-slop-ko
+/plugin install stakeholder-brief@wonderit
 ```
 
 jasoseo 설치 (자소서를 쓸 때):
 
 ```
-/plugin install jasoseo@stop-slop-ko
+/plugin install jasoseo@wonderit
 ```
 
 stakeholder-brief만 따로 설치해도 동작은 하지만, 마지막 문체 정리를 stop-slop-ko에 맡기도록 만들어져 있어서 둘 다 설치하는 것을 권장합니다.
@@ -235,9 +235,9 @@ The English stop-slop rules ("prefer active voice", "avoid lists of three") back
 
 ```
 /plugin marketplace add wonderit/stop-slop-ko      # register the marketplace (once)
-/plugin install stop-slop-ko@stop-slop-ko         # the main plugin
-/plugin install stakeholder-brief@stop-slop-ko    # optional: audience-specific briefs
-/plugin install jasoseo@stop-slop-ko              # optional: Korean cover letter interviews
+/plugin install stop-slop-ko@wonderit         # the main plugin
+/plugin install stakeholder-brief@wonderit    # optional: audience-specific briefs
+/plugin install jasoseo@wonderit              # optional: Korean cover letter interviews
 ```
 
 ## 라이선스

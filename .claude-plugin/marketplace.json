@@ -1,12 +1,12 @@
 {
-  "name": "stop-slop-ko",
+  "name": "wonderit",
   "owner": {
     "name": "wonderit",
     "url": "https://github.com/wonderit"
   },
   "metadata": {
     "description": "한국어 문서의 AI 티를 걷어내는 스킬과 자소서 인터뷰 스킬 모음",
-    "version": "1.3.4"
+    "version": "1.4.0"
   },
   "plugins": [
     {

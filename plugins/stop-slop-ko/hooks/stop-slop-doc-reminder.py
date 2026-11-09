@@ -37,7 +37,7 @@ DATA_COLUMN = re.compile(r"칼럼[을를이가은는의]?\s*(이름|명|추가|�
                          r"\bDB\b|테이블|CSV|SQL|스키마|데이터|엑셀|시트|(?<![가-힣])표(?![가-힣])", re.I)
 FORMAL = re.compile(DECK + r"|회의록|보고서|주간보고|제안서|기획서|계획서|설계서|정의서|결과서|명세서|매뉴얼|안내문|공문|"
                     r"장표|슬라이드|\bppt|pptx|파워포인트|엑셀|xlsx|스프레드시트", re.I)
-JASOSEO_ID = "jasoseo@stop-slop-ko"
+JASOSEO_ID = "jasoseo@wonderit"
 # 백그라운드 작업 알림과 서브에이전트 보고는 이 태그로 시작하는 프롬프트로 들어온다.
 NOTICE_HEAD = ("<task-notification>", "<agent-message")
 NOTICE_BLOCK = re.compile(r"<(task-notification|agent-message)\b.*?</\1>", re.S)
