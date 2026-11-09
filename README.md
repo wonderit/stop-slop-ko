@@ -8,6 +8,14 @@
 
 > English summary: Korean version of [stop-slop](https://github.com/hardikpandya/stop-slop). A Claude Code plugin that keeps AI tells (em-dashes, spaced middot lists, decorative emoji, translationese) out of Korean business documents, with a scanner for docx/pptx/xlsx/md. See [English](#english) below.
 
+## 이 포크에서 달라진 점
+
+[leeandev/stop-slop-ko](https://github.com/leeandev/stop-slop-ko)(MIT)를 포크해 실무 문서와 장표를 쓰면서 걸린 규칙을 더했습니다.
+
+- ㄻ 명사형 검사 추가: "만듦", "이끎" 등은 WARN
+- 감성 제목 검사 추가: 짧은 줄의 "~의 결", "~의 온도", "~을 잇다"는 INFO
+- 표지, 제목, 부제, 라벨은 스캔 PASS와 상관없이 사람이 읽어서 확인하도록 절차 보강
+
 ## Before / After
 
 ```diff
@@ -144,7 +152,7 @@ Claude Code 입력창에 한 줄씩 입력합니다.
 이 저장소를 플러그인 목록으로 등록합니다. 아직 아무것도 설치되지 않습니다.
 
 ```
-/plugin marketplace add leeandev/stop-slop-ko
+/plugin marketplace add wonderit/stop-slop-ko
 ```
 
 **2단계. 필요한 플러그인 설치 (골라서)**
@@ -209,7 +217,7 @@ stakeholder-brief만 따로 설치해도 동작은 하지만, 마지막 문체 �
 The English stop-slop rules ("prefer active voice", "avoid lists of three") backfire in Korean, where noun-ending bullet style (`~함/~됨`) is the normal register of official documents. This version targets the real Korean signals instead: em-dashes, spaced middot lists, decorative symbols, translationese, and spaces before particles.
 
 ```
-/plugin marketplace add leeandev/stop-slop-ko      # register the marketplace (once)
+/plugin marketplace add wonderit/stop-slop-ko      # register the marketplace (once)
 /plugin install stop-slop-ko@stop-slop-ko         # the main plugin
 /plugin install stakeholder-brief@stop-slop-ko    # optional: audience-specific briefs
 /plugin install jasoseo@stop-slop-ko              # optional: Korean cover letter interviews

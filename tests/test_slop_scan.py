@@ -178,5 +178,22 @@ class Cli(Base):
         self.assertEqual(self.run_cli(str(p), "--prose").returncode, 1)
 
 
+class ForkRules(Base):
+    def codes(self, lines):
+        return [h[1] for h in S.scan(self.md(lines), True, False)]
+
+    def test_rieum_noun_warns(self):
+        self.assertIn("NOUN_RIEUM", self.codes(["새 화면을 만듦", "팀을 이끎"]))
+
+    def test_rieum_word_kept(self):
+        self.assertNotIn("NOUN_RIEUM", self.codes(["제품의 만듦새가 좋다."]))
+
+    def test_poetic_title_info(self):
+        self.assertIn("POETIC_TITLE", self.codes(["# 팬 반응과 곡의 결"]))
+
+    def test_long_sentence_not_poetic(self):
+        self.assertNotIn("POETIC_TITLE", self.codes(["이번 분기 서버실 냉각 장치를 교체해서 측정한 서버실 내부의 온도"]))
+
+
 if __name__ == "__main__":
     unittest.main()
