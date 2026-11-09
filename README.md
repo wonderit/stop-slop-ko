@@ -8,13 +8,29 @@
 
 > English summary: Korean version of [stop-slop](https://github.com/hardikpandya/stop-slop). A Claude Code plugin that keeps AI tells (em-dashes, spaced middot lists, decorative emoji, translationese) out of Korean business documents, with a scanner for docx/pptx/xlsx/md. See [English](#english) below.
 
-## 이 포크에서 달라진 점
+## 원본과 달라진 점
 
-[leeandev/stop-slop-ko](https://github.com/leeandev/stop-slop-ko)(MIT)를 포크해 실무 문서와 장표를 쓰면서 걸린 규칙을 더했습니다.
+[leeandev/stop-slop-ko](https://github.com/leeandev/stop-slop-ko)(MIT)의 포크입니다. 실무 문서와 장표를 쓰면서 원본 규칙으로 걸러지지 않았던 항목을 더했습니다.
 
-- ㄻ 명사형 검사 추가: "만듦", "이끎" 등은 WARN
-- 감성 제목 검사 추가: 짧은 줄의 "~의 결", "~의 온도", "~을 잇다"는 INFO
-- 표지, 제목, 부제, 라벨은 스캔 PASS와 상관없이 사람이 읽어서 확인하도록 절차 보강
+| 항목 | 원본 | 이 포크 |
+|---|---|---|
+| ㄻ 명사형(`만듦`, `이끎` 등) | 검사 없음 | 스캐너 WARN, 규칙에 풀어 쓰는 방법 추가 |
+| 감성 제목(`~의 결`, `~의 온도`, `~을 잇다` 등) | 검사 없음 | 짧은 줄에서 스캐너 INFO |
+| 표지, 제목, 부제, 라벨 | PASS여도 한 번 읽기 | 사람이 쓸 말인지 읽어서 확인하는 절차 명시 |
+| 자동 적용 훅의 `덱` 요청 | 감지 안 함 | "주간 덱 만들어줘" 감지, "인덱스 정리"는 제외 |
+| 설치 경로 | `leeandev/stop-slop-ko` | `wonderit/stop-slop-ko` |
+
+추가한 규칙의 수정 예시입니다.
+
+```diff
+- - 새 검색 화면을 만듦
++ - 새 검색 화면을 만들었음
+
+- # 고객 경험의 온도
++ # 고객 설문 결과 보고
+```
+
+em-dash, 공백 가운뎃점 나열, 조사 앞 공백, 번역투 규칙은 원본 그대로이고 그 밖의 플러그인(stakeholder-brief, jasoseo)도 바꾸지 않았습니다.
 
 ## Before / After
 

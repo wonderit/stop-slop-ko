@@ -171,5 +171,15 @@ class Route(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout.decode("utf-8", "replace"))
 
 
+class DeckKeyword(unittest.TestCase):
+    def test_deck_detected(self):
+        for p in ["덱 만들어줘", "주간 덱 수정해줘", "미팅덱 정리해줘", "W08 덱을 업데이트해줘"]:
+            self.assertIsNotNone(H.route(p, jasoseo=False), p)
+
+    def test_deck_inside_word_ignored(self):
+        for p in ["인덱스 정리해줘", "덱스터 정리해줘"]:
+            self.assertIsNone(H.route(p, jasoseo=False), p)
+
+
 if __name__ == "__main__":
     unittest.main()
