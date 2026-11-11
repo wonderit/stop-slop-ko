@@ -197,3 +197,47 @@ class ForkRules(Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ChatEndings(Base):
+    def chat(self, lines, info=True):
+        return [h[1] for h in S.scan(self.md(lines), info, False, True)]
+
+    def test_yo_run_warns(self):
+        lines = ["머지 뒤에 코드 보다가 두 가지가 보였어요.",
+                 "그 문서 행이 빠진 채 상태가 저장돼요. 다음 회차에 행 수백 개가 나가요.",
+                 "`MORE_MAX` 링크가 바뀌어도 마찬가지예요."]
+        self.assertIn("CHAT_ENDING_RUN", self.chat(lines))
+
+    def test_hamnida_run_warns(self):
+        lines = ["확인했습니다.", "규칙이 좋습니다.", "머지하겠습니다.", "다음에 보겠습니다."]
+        self.assertIn("CHAT_ENDING_RUN", self.chat(lines))
+
+    def test_mixed_passes(self):
+        lines = ["머지 뒤에 코드 보다가 두 가지가 보였습니다.",
+                 "그 문서 행이 빠진 채 상태가 저장돼요. 다음 회차에 행 수백 개가 나갑니다.",
+                 "링크가 바뀌어도 마찬가지예요. 기준선을 다시 잡으면 좋겠습니다."]
+        self.assertFalse([c for c in self.chat(lines) if c.startswith("CHAT")])
+
+    def test_off_by_default(self):
+        lines = ["보였어요.", "저장돼요.", "나가요.", "좋겠어요."]
+        self.assertFalse([c for c in self.codes(lines, prose=False) if c.startswith("CHAT")])
+
+    def test_gaejo_and_plain_not_counted(self):
+        lines = ["- 문서 행이 빠짐", "- 다음 회차에 다시 나감", "회차마다 시작 위치를 돌린다.", "상한을 넘는다."]
+        self.assertFalse([c for c in self.chat(lines) if c.startswith("CHAT")])
+
+    def test_one_register_info(self):
+        mixed = self.chat(["보였어요.", "저장돼요.", "나갑니다.", "좋겠어요.", "넘어요.", "빠져요."])
+        self.assertNotIn("CHAT_ONE_REGISTER", mixed)
+        same = self.chat(["보였어요.", "저장돼요.", "나갑니다.", "좋겠어요.", "넘어요.", "빠져요.", "됩니다."])
+        self.assertNotIn("CHAT_ONE_REGISTER", same)
+        one = self.chat(["보였어요.", "저장돼요.", "나가요.", "좋겠어요.", "넘어요."])
+        self.assertIn("CHAT_ONE_REGISTER", one)
+
+    def test_ending_family(self):
+        self.assertEqual(S.ending_family("돌려 주세요."), "해요")
+        self.assertEqual(S.ending_family("좋겠습니다!"), "습니다")
+        self.assertEqual(S.ending_family("48시간까지만요"), "해요")
+        self.assertIsNone(S.ending_family("상한을 넘는다."))
+        self.assertIsNone(S.ending_family("문서 행이 빠짐"))

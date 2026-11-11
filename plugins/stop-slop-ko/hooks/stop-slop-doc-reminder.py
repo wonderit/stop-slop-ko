@@ -37,6 +37,11 @@ DATA_COLUMN = re.compile(r"칼럼[을를이가은는의]?\s*(이름|명|추가|�
                          r"\bDB\b|테이블|CSV|SQL|스키마|데이터|엑셀|시트|(?<![가-힣])표(?![가-힣])", re.I)
 FORMAL = re.compile(DECK + r"|회의록|보고서|주간보고|제안서|기획서|계획서|설계서|정의서|결과서|명세서|매뉴얼|안내문|공문|"
                     r"장표|슬라이드|\bppt|pptx|파워포인트|엑셀|xlsx|스프레드시트", re.I)
+# 메시지(댓글·답글·슬랙·DM·공지 글). 쓰는 동작이 붙을 때만 본다("댓글 수집 코드", "에러 메시지"는 아님).
+CHAT = re.compile(r"(답글|댓글|코멘트|답장|리플)[^\n]{0,8}?(달|남기|써|쓰|작성|초안|다듬)|"
+                  r"(슬랙|slack|(?<![A-Za-z])DM|디엠|카톡|채널|스레드)\s*(에\s*|으로\s*|로\s*)?(메시지|공지|글|답장|답글|댓글|올릴|보낼)|"
+                  r"(공지|안내)\s*(메시지|글)", re.I)
+CHAT_NOUN = re.compile(r"답글|댓글|코멘트|답장")   # 말투 요청("AI 티 빼줘")과 같이 오면 메시지로 본다
 JASOSEO_ID = "jasoseo@wonderit"
 # 백그라운드 작업 알림과 서브에이전트 보고는 이 태그로 시작하는 프롬프트로 들어온다.
 NOTICE_HEAD = ("<task-notification>", "<agent-message")
@@ -48,6 +53,7 @@ SCANNER = (Path(__file__).resolve().parent.parent / "skills" / "stop-slop-ko" / 
 PYTHON = Path(sys.executable).as_posix() if sys.executable else "python3"
 SCAN = f"`\"{PYTHON}\" \"{SCANNER}\" <파일>`"
 SCAN_PROSE = f"`\"{PYTHON}\" \"{SCANNER}\" --prose <파일>`"
+SCAN_CHAT = f"`\"{PYTHON}\" \"{SCANNER}\" --chat --info <파일>`"
 MESSAGES = {
     "brief": (
         "[문서 스킬 라우팅] 청중이 정해진 공유용 문서 요청으로 판정됨(키워드: {kw}). "
@@ -65,6 +71,12 @@ MESSAGES = {
         "(새로 쓰기=생성, 기존 문서 다듬기=정제, 다른 문서 문체에 맞추기=톤 맞춤)로 작업하고, "
         f"파일을 만든 뒤 {SCAN}로 검증해 WARN을 고친 다음 결과(PASS/FAIL)를 보고할 것. "
         "docx/pptx/xlsx 스킬과 함께 쓴다. 문서 텍스트를 쓰지 않는 요청(읽기, 분석, 코드)이면 무시."
+    ),
+    "chat": (
+        "[stop-slop-ko 자동 적용] 메시지(댓글, 답글, 슬랙, 공지 글) 작성/수정 요청으로 판정됨(키워드: {kw}). "
+        "stop-slop-ko 스킬의 메시지 레지스터를 따른다: '~습니다'와 '~해요'를 섞고 같은 끝맺음을 세 문장 넘게 잇지 않으며, "
+        "굵은 제목과 번호 목록 없이 짧은 문단 두세 개로 쓴다. 보내기 전 초안을 파일로 두면 "
+        f"{SCAN_CHAT}로 검사해 결과(PASS/FAIL)를 보고할 것. 글을 쓰지 않는 요청이면 무시."
     ),
     "prose": (
         "[stop-slop-ko 자동 적용] 한국어 서술형 글(리포트, 에세이, 자소서, 블로그, 칼럼) 작성/수정 요청으로 판정됨(키워드: {kw}). "
@@ -147,6 +159,9 @@ def route(prompt, jasoseo=None, cwd=None):
         weak = PROSE_WEAK.search(prompt)
         if weak and not FORMAL.search(prompt) and not WORK_REPORT.search(prompt):
             return "prose", weak.group(0)
+    chat = CHAT.search(prompt) or (tone and CHAT_NOUN.search(prompt))
+    if chat and not FORMAL.search(prompt):
+        return "chat", chat.group(0)
     if tone:
         return "slop", tone.group(0)
     doc = DOC.search(prompt)
@@ -189,6 +204,13 @@ SELFTEST = [
     ("신문 기고를 작성해줘", "prose"),
     ("자소서 초안 써줘", "prose", False),
     ("자기소개서 1번 다듬어줘", "prose", False),
+    ("PR에 답글 어떻게 달지 써줘", "chat"),
+    ("슬랙 공지 초안 써줘", "chat"),
+    ("이 댓글 AI 티 안 나게 다듬어줘", "chat"),
+    ("채널에 올릴 글 써줘", "chat"),
+    ("유튜브 댓글 수집 코드 고쳐줘", None),
+    ("에러 메시지 고쳐줘", None),
+    ("회의록 슬랙에 올릴 글 정리해줘", "slop"),
 ]
 
 

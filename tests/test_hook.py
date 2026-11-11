@@ -197,3 +197,16 @@ class HumanLikeKeyword(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ChatRoute(unittest.TestCase):
+    def test_chat_detected(self):
+        for prompt in ["PR에 답글 어떻게 달지 써줘", "슬랙 공지 초안 써줘", "이 댓글 AI 티 안 나게 다듬어줘"]:
+            self.assertEqual(H.route(prompt, jasoseo=True)[0], "chat", prompt)
+
+    def test_dev_prompts_not_chat(self):
+        for prompt in ["유튜브 댓글 수집 코드 고쳐줘", "에러 메시지 고쳐줘"]:
+            self.assertIsNone(H.route(prompt, jasoseo=True), prompt)
+
+    def test_formal_doc_stays_slop(self):
+        self.assertEqual(H.route("회의록 슬랙에 올릴 글 정리해줘", jasoseo=True)[0], "slop")

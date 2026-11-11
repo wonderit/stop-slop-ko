@@ -4,7 +4,7 @@
 docx/pptx/xlsx/md/txt/html 본문을 문단(셀) 단위로 뽑아 references/ko-slop-patterns.md의
 기계 판정 가능한 신호만 찾는다. 번역투·상투구 판단은 사람(모델) 몫.
 
-usage: python slop_scan.py FILE [FILE ...] [--info] [--prose] [--out report.txt]
+usage: python slop_scan.py FILE [FILE ...] [--info] [--prose] [--chat] [--out report.txt]
 exit : 0 = WARN 없음(PASS), 1 = WARN 있음(FAIL), 2 = 입력 오류
 """
 import argparse
@@ -71,6 +71,12 @@ THINK = re.compile(r"([다라]고\s*(생각(한다|합니다|했다|했습니다
                    r"[다라]는\s*생각이\s*(든다|듭니다|들었다|들었습니다))(?!면)")
 CONNECTOR = re.compile(r"^\s*(또한|나아가|더불어|결론적으로|이처럼|이를\s*통해|따라서|그러므로|뿐만\s*아니라)[,\s]")
 THINK_MIN, THINK_PER_CHARS = 3, 1000
+
+# --chat: 메시지(PR·이슈 댓글, 슬랙, 짧은 회신). '~해요'만 또는 '~습니다'만 줄줄이 이어지면 기계 리듬이 난다.
+CHAT_RUN = 4          # 같은 끝맺음이 이만큼 연속이면 WARN
+CHAT_ONE_MIN = 5      # 이 문장 수 이상인데 한 가지 끝맺음만 쓰면 INFO
+SENT_SPLIT = re.compile(r"(?<=[.!?…])\s+|\n+")
+TAIL_JUNK = re.compile(r"[\s\"'”’)\]>*_`~.!?…,\U0001F300-\U0001FAFF]+$")
 CONNECTOR_MIN, CONNECTOR_RATIO = 3, 0.25
 
 
@@ -134,6 +140,45 @@ def prose_totals(paras, show_info):
     if conn >= CONNECTOR_MIN and conn >= CONNECTOR_RATIO * len(body):
         hits.append(("WARN", "PROSE_CONNECTOR", "(문서 전체)", f"연결어로 시작하는 문단 {len(body)}개 중 {conn}개",
                      "꼭 필요한 곳 하나만 남기기"))
+    return hits
+
+
+def ending_family(sentence):
+    """문장 끝맺음 갈래: '습니다'(합쇼체) | '해요'(해요체) | None(평서 '~다', 명사 종결 등)."""
+    t = TAIL_JUNK.sub("", sentence.strip())
+    if not t or not HANGUL.search(t[-1]):
+        return None
+    if re.search(r"(니다|니까|십시오)$", t):
+        return "습니다"
+    if t.endswith("요"):
+        return "해요"
+    return None
+
+
+def chat_totals(paras, show_info):
+    """같은 끝맺음이 CHAT_RUN 문장 넘게 이어지는 곳과, 한 가지 끝맺음만 쓴 글을 찾는다."""
+    sents = []
+    for where, text in paras:
+        for s in SENT_SPLIT.split(text):
+            fam = ending_family(s)
+            if fam:
+                sents.append((where, fam, s.strip()))
+    hits, run = [], []
+    for item in sents + [(None, None, None)]:
+        if run and item[1] == run[-1][1]:
+            run.append(item)
+            continue
+        if len(run) >= CHAT_RUN:
+            fam = run[0][1]
+            other = "해요" if fam == "습니다" else "습니다"
+            hits.append(("WARN", "CHAT_ENDING_RUN", run[0][0], f"'~{fam}' {len(run)}문장 연속: {run[0][2][:40]}",
+                         f"몇 문장은 '~{other}'로 바꿔 섞기"))
+        run = [item]
+    fams = {f for _, f, _ in sents}
+    if show_info and len(sents) >= CHAT_ONE_MIN and len(fams) == 1:
+        fam = fams.pop()
+        hits.append(("INFO", "CHAT_ONE_REGISTER", "(문서 전체)", f"{len(sents)}문장 모두 '~{fam}'",
+                     "'~습니다'와 '~해요'를 섞으면 덜 가볍고 덜 딱딱함"))
     return hits
 
 
@@ -273,7 +318,7 @@ EXTRACTORS = {".docx": extract_docx, ".pptx": extract_pptx, ".xlsx": extract_xls
               ".md": extract_md, ".txt": extract_md, ".html": extract_html, ".htm": extract_html}
 
 
-def scan(path, show_info, prose=False):
+def scan(path, show_info, prose=False, chat=False):
     hits, quotes, paras = [], {"curly": 0, "straight": 0}, []
     rules = RULES + PROSE_RULES if prose else RULES
     for where, text in EXTRACTORS[path.suffix.lower()](path):
@@ -307,6 +352,8 @@ def scan(path, show_info, prose=False):
         is_md = path.suffix.lower() == ".md"
         skip = front_matter_end(path) if is_md else 0
         hits.extend(prose_totals(split_paragraphs(paras, is_md, skip), show_info))
+    if chat:
+        hits.extend(chat_totals(paras, show_info))
     return hits
 
 
@@ -315,6 +362,7 @@ def main():
     ap.add_argument("files", nargs="+")
     ap.add_argument("--info", action="store_true", help="INFO(판단 필요) 항목도 표시")
     ap.add_argument("--prose", action="store_true", help="서술형 글(리포트·에세이·블로그) 규칙도 검사")
+    ap.add_argument("--chat", action="store_true", help="메시지(댓글·슬랙) 끝맺음 반복 검사")
     ap.add_argument("--out", help="리포트를 UTF-8 파일로 저장(콘솔 cp949 회피)")
     args = ap.parse_args()
 
@@ -328,7 +376,7 @@ def main():
             bad_input = True
             continue
         try:
-            hits = scan(path, args.info, args.prose)
+            hits = scan(path, args.info, args.prose, args.chat)
         except (zipfile.BadZipFile, ET.ParseError, KeyError, UnicodeDecodeError) as e:
             lines.append(f"[ERROR] {f}: {type(e).__name__}: {e}")
             bad_input = True
