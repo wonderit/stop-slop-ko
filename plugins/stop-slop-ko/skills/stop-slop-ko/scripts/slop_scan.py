@@ -74,7 +74,8 @@ THINK_MIN, THINK_PER_CHARS = 3, 1000
 
 # --chat: 메시지(PR·이슈 댓글, 슬랙, 짧은 회신). '~해요'만 또는 '~습니다'만 줄줄이 이어지면 기계 리듬이 난다.
 CHAT_RUN = 4          # 같은 끝맺음이 이만큼 연속이면 WARN
-CHAT_ONE_MIN = 5      # 이 문장 수 이상인데 한 가지 끝맺음만 쓰면 INFO
+CHAT_SKEW_MIN = 5     # 이 문장 수 이상이면 갈래 비율도 봄
+CHAT_SKEW = 0.7       # 한 갈래가 이 비율 이상이면 WARN. 번갈아 써서 연속은 피해도 한쪽으로 쏠린 글을 잡음
 SENT_SPLIT = re.compile(r"(?<=[.!?…])\s+|\n+")
 TAIL_JUNK = re.compile(r"[\s\"'”’)\]>*_`~.!?…,\U0001F300-\U0001FAFF]+$")
 CONNECTOR_MIN, CONNECTOR_RATIO = 3, 0.25
@@ -156,7 +157,7 @@ def ending_family(sentence):
 
 
 def chat_totals(paras, show_info):
-    """같은 끝맺음이 CHAT_RUN 문장 넘게 이어지는 곳과, 한 가지 끝맺음만 쓴 글을 찾는다."""
+    """같은 끝맺음이 CHAT_RUN 문장 이상 이어지는 곳과, 한 갈래로 쏠린 글(CHAT_SKEW 이상)을 찾는다."""
     sents = []
     for where, text in paras:
         for s in SENT_SPLIT.split(text):
@@ -174,11 +175,14 @@ def chat_totals(paras, show_info):
             hits.append(("WARN", "CHAT_ENDING_RUN", run[0][0], f"'~{fam}' {len(run)}문장 연속: {run[0][2][:40]}",
                          f"몇 문장은 '~{other}'로 바꿔 섞기"))
         run = [item]
-    fams = {f for _, f, _ in sents}
-    if show_info and len(sents) >= CHAT_ONE_MIN and len(fams) == 1:
-        fam = fams.pop()
-        hits.append(("INFO", "CHAT_ONE_REGISTER", "(문서 전체)", f"{len(sents)}문장 모두 '~{fam}'",
-                     "'~습니다'와 '~해요'를 섞으면 덜 가볍고 덜 딱딱함"))
+    if len(sents) >= CHAT_SKEW_MIN:
+        yo = sum(1 for _, f, _ in sents if f == "해요")
+        fam, n = ("해요", yo) if yo * 2 >= len(sents) else ("습니다", len(sents) - yo)
+        if n >= CHAT_SKEW * len(sents):
+            other = "해요" if fam == "습니다" else "습니다"
+            hits.append(("WARN", "CHAT_ENDING_SKEW", "(문서 전체)",
+                         f"'~{fam}' {n}/{len(sents)}문장({round(100 * n / len(sents))}%)",
+                         f"'~{other}' 쪽을 늘려 반반에 가깝게"))
     return hits
 
 

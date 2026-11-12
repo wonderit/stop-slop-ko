@@ -195,9 +195,6 @@ class ForkRules(Base):
         self.assertNotIn("POETIC_TITLE", self.codes(["이번 분기 서버실 냉각 장치를 교체해서 측정한 서버실 내부의 온도"]))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class ChatEndings(Base):
     def chat(self, lines, info=True):
@@ -227,13 +224,24 @@ class ChatEndings(Base):
         lines = ["- 문서 행이 빠짐", "- 다음 회차에 다시 나감", "회차마다 시작 위치를 돌린다.", "상한을 넘는다."]
         self.assertFalse([c for c in self.chat(lines) if c.startswith("CHAT")])
 
-    def test_one_register_info(self):
-        mixed = self.chat(["보였어요.", "저장돼요.", "나갑니다.", "좋겠어요.", "넘어요.", "빠져요."])
-        self.assertNotIn("CHAT_ONE_REGISTER", mixed)
-        same = self.chat(["보였어요.", "저장돼요.", "나갑니다.", "좋겠어요.", "넘어요.", "빠져요.", "됩니다."])
-        self.assertNotIn("CHAT_ONE_REGISTER", same)
-        one = self.chat(["보였어요.", "저장돼요.", "나가요.", "좋겠어요.", "넘어요."])
-        self.assertIn("CHAT_ONE_REGISTER", one)
+    def test_skew_warns(self):
+        # 번갈아 써서 4문장 연속은 없지만 '~해요'가 5/7(71%)
+        skew = self.chat(["가능합니다.", "이런 것도 돼요.", "넣을 수 있어요.", "적어 드릴 수 있고요.",
+                          "만들고 있는데요, 넣을 예정입니다.", "쓸 수 있을 것 같아요.", "둘러보셔도 좋아요."])
+        self.assertIn("CHAT_ENDING_SKEW", skew)
+        self.assertNotIn("CHAT_ENDING_RUN", skew)
+        one = self.chat(["보였어요.", "저장돼요.", "나가요.", "좋겠어요.", "넘어요."], info=False)
+        self.assertIn("CHAT_ENDING_SKEW", one)
+
+    def test_balanced_passes(self):
+        lines = ["가능합니다.", "이런 것도 돼요.", "넣을 수 있습니다.", "적어 드릴 수 있어요.",
+                 "만들고 있습니다.", "넣을 예정이에요.", "쓸 수 있을 것 같습니다.", "둘러보셔도 좋아요."]
+        self.assertFalse([c for c in self.chat(lines) if c.startswith("CHAT")])
+
+    def test_skew_needs_five(self):
+        # 4문장 이하는 비율을 보지 않음(3:1 이어도 통과)
+        lines = ["보였어요.", "저장돼요.", "나갑니다.", "좋겠어요."]
+        self.assertNotIn("CHAT_ENDING_SKEW", self.chat(lines))
 
     def test_ending_family(self):
         self.assertEqual(S.ending_family("돌려 주세요."), "해요")
@@ -241,3 +249,5 @@ class ChatEndings(Base):
         self.assertEqual(S.ending_family("48시간까지만요"), "해요")
         self.assertIsNone(S.ending_family("상한을 넘는다."))
         self.assertIsNone(S.ending_family("문서 행이 빠짐"))
+if __name__ == "__main__":
+    unittest.main()
